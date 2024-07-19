@@ -7,16 +7,16 @@
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <h1 style="font-family:Roboto; margin-right: 5em;">
-        Super TicTacToe<br>
-        <a href="https://www.youtube.com/shorts/_Na3a1ZrX7c">Rules</a><br>
-        <button onclick="player_vs_cpu()">Play against computer</button><br>
-        <button onclick="cpu_vs_cpu()">Computer self-play</button><br>
-        <button onclick="player_vs_player()">Person vs Person</button><br>
-        <span class="alerts"></span>
-    </h1>
+    <div id="menu">
+        <h1 class="glowFont">Super TicTacToe</h1>
+        <button onclick="player_vs_cpu()">Play against computer</button>
+        <button onclick="cpu_vs_cpu()">Computer self-play</button>
+        <button onclick="player_vs_player()">Person vs Person</button>
+        <a href="https://www.youtube.com/shorts/_Na3a1ZrX7c" style="font-size:1.4em;" class="glowFont">Rules</a>  
+    </div>
     <div id="allGames">
     </div>
+    <span class="alerts"></span>
     <script src="main.js"></script>
     <script>
 
