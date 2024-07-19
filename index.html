@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super TicTacToe</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <h1 style="font-family:Roboto; margin-right: 5em;">Super TicTacToe<br>
+    <span class="alerts"></span>
+    </h1>
+    <div id="allGames">
+
+    </div>
+    <script src="main.js"></script>
+    <script>
+        window.game = new Game();
+
+        setInterval(function(){
+            if (window.game.winner() != 0){
+                window.game = new Game();
+            }
+            if (window.game.player == 'O')
+                window.game.goodMove();
+        },2000)
+    </script>
+</body>
+</html>
