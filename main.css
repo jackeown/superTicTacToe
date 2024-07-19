@@ -6,6 +6,12 @@
     font-weight: bold;
 }
 
+button {
+    padding: 2em;
+    background: black;
+}
+
+
 h1 {
     text-shadow: 3px 3px 5px cyan;/* format is: h-shadow, v-shadow, blur, spread, color */
 }

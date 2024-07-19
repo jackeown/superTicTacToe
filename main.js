@@ -1,8 +1,22 @@
 
 function myAlert(message){
-    document.querySelector('.alerts').innerHTML = message;
+    document.querySelector('.alerts').innerHTML += "<br>" + message;
 }
 
+
+function clickHandler(miniGame, index){
+    window.game.placeToken(miniGame, index);
+
+    let movesAndScores = window.game.scoreMoves(3);
+    if (window.game.player == 'O')
+        movesAndScores = movesAndScores.sort((x,y) => x[1] - y[1]);
+
+    let moves = movesAndScores.map(x => `(${x[0][0]},${x[0][1]})`);;
+    let scores = movesAndScores.map(x => x[1]);
+    console.log("moves: ", moves);
+    console.log("scores: ", scores);
+
+}
 
 
 
@@ -69,7 +83,7 @@ class MiniGame {
             else if (this.board[i] == 'O')
                 html += '<div class="token O">O</div>';
             else
-                html += `<div class="token empty" onclick="window.game.placeToken(${this.index}, ${i})"></div>`;
+                html += `<div class="token empty" onclick="clickHandler(${this.index}, ${i})"></div>`;
         }
         let forced = mustPlay ? 'forced' : '';
         let finished = this.winner() != 0 ? 'finished' : '';
@@ -78,9 +92,6 @@ class MiniGame {
     }
 
 }
-
-
-
 
 
 
@@ -106,9 +117,6 @@ class Game {
 
         this.simulated = simulated;
 
-        if (!this.simulated){
-            this.render();
-        }
     }
 
     clone(){
@@ -135,8 +143,10 @@ class Game {
         
         this.forcedBoard =  (this.subGames[place].winner() == 0) ? place : -1 
 
-        if (!this.simulated)
+        if (!this.simulated){
+            console.log("Not simulated!")
             this.render();
+        }
     }
 
     // Moves are of the form [subGame, place]
@@ -174,13 +184,15 @@ class Game {
 
 
     render(){
+
+        if (this.simulated)
+            return;
+
         let allGames = document.getElementById('allGames');
         allGames.innerHTML = '';
         for (let [i, subGame] of this.subGames.entries())
             allGames.innerHTML += subGame.html(i == this.forcedBoard);
 
-        if (this.simulated)
-            return;
 
         if (this.winner() == 1){
             myAlert('X wins!');
@@ -212,7 +224,7 @@ class Game {
         if (this.winner() != 0)
             return;
 
-        let best = this.bestMove(3);
+        let best = this.bestMove(4);
         this.placeToken(best[0], best[1]);
     }
 
@@ -240,73 +252,87 @@ class Game {
 
 
 
-    // MiniMax search for the best move from the
-    // current state of the board.
-    // This should return an array of [score, move].
-    // +1 is win for X, -1 is win for O, 0 is tie
-    // (X is maximizer, O is minimizer)
-    // This function is recursive.
-    eval(depth){
+    // Alpha-beta pruning added to MiniMax to improve efficiency
+    eval(depth, alpha, beta) {
         console.log(`eval: ${depth}`);
 
         if (this.winner() != 0)
             return this.winner() == 1 ? 1 : this.winner() == 2 ? -1 : 0;
 
-        if (depth == 0){
-            // who is winning the minigames?
+        if (depth == 0) {
             let statuses = this.subGames.filter(g => g.winner() != 0).map(g => g.winner() == 1 ? 1 : g.winner() == 2 ? -1 : 0);
-            let score = statuses.reduce((a,b) => a + b, 0);
-            return score / 10; // shouldn't be more important than actually winning...
+            let score = statuses.reduce((a, b) => a + b, 0);
+            return score / 10;  // Scale the score to be less significant than a win
         }
 
         let moves = this.possibleMoves();
         let futures = this.possibleFutures(moves);
 
-        let scores = futures.map(function(game){
-            return game.eval(depth - 1);
-        });
-
-        if (this.player == 'X'){
-            return Math.max(...scores);
-        }
-        else{
-            return Math.min(...scores);
+        if (this.player == 'X') {
+            let maxScore = -Infinity;
+            for (let game of futures) {
+                let score = game.eval(depth - 1, alpha, beta);
+                maxScore = Math.max(maxScore, score);
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) {
+                    break;  // Beta cut-off
+                }
+            }
+            return maxScore;
+        } else {
+            let minScore = Infinity;
+            for (let game of futures) {
+                let score = game.eval(depth - 1, alpha, beta);
+                minScore = Math.min(minScore, score);
+                beta = Math.min(beta, score);
+                if (beta <= alpha) {
+                    break;  // Alpha cut-off
+                }
+            }
+            return minScore;
         }
     }
 
-
-    // Evals the states after
-    // each move.
-    bestMove(depth){
-
-        // If there is a winner, just return null
+    // Uses alpha-beta pruning
+    scoreMoves(depth) {
         if (this.winner() != 0)
-            return null; 
+            return null;
 
         let moves = this.possibleMoves();
-        let futures = moves.map(function(move){
+        let scores = [];
+        let bestScore = (this.player == 'X') ? -Infinity : Infinity;
+
+        for (let move of moves) {
             let game = this.clone();
-            let [subGame, place] = move;
-            game.placeToken(subGame, place);
+            game.simulated = true;
+            game.placeToken(...move);
 
-            return game;
-        }.bind(this));
+            let score = game.eval(depth - 1, -Infinity, Infinity);
+            scores.push(score);
 
-        let scores = futures.map(function(game){
-            return game.eval(depth - 1);
-        });
-
-        if (this.player == 'X'){
-            let bestMoves = moves.filter((move, i) => scores[i] == Math.max(...scores));
-            return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            if (this.player == 'X') {
+                bestScore = Math.max(bestScore, score);
+            } else {
+                bestScore = Math.min(bestScore, score);
+            }
         }
-        else{
-            let bestMoves = moves.filter((move, i) => scores[i] == Math.min(...scores));
-            return bestMoves[Math.floor(Math.random() * bestMoves.length)];
-        }
+
+        // Return moves paired with scores sorted by score
+        return moves.map((move, i) => [move, scores[i]]).sort((a, b) => b[1] - a[1]);
     }
 
 
+    bestMove(depth){
+        if (this.player == 'X'){
+            let bestScore = Math.max(...this.scoreMoves(depth).map(x => x[1]));
+            let bestMoves = this.scoreMoves(depth).filter(x => x[1] == bestScore);
+            return bestMoves[Math.floor(Math.random() * bestMoves.length)][0];
+        }
+
+        let bestScore = Math.min(...this.scoreMoves(depth).map(x => x[1]));
+        let bestMoves = this.scoreMoves(depth).filter(x => x[1] == bestScore);
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)][0];
+    }
 
 
 }

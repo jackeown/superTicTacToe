@@ -7,23 +7,56 @@
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <h1 style="font-family:Roboto; margin-right: 5em;">Super TicTacToe<br>
-    <a href="https://www.youtube.com/shorts/_Na3a1ZrX7c">Rules</a>
-    <span class="alerts"></span>
+    <h1 style="font-family:Roboto; margin-right: 5em;">
+        Super TicTacToe<br>
+        <a href="https://www.youtube.com/shorts/_Na3a1ZrX7c">Rules</a><br>
+        <button onclick="player_vs_cpu()">Play against computer</button><br>
+        <button onclick="cpu_vs_cpu()">Computer self-play</button><br>
+        <button onclick="player_vs_player()">Person vs Person</button><br>
+        <span class="alerts"></span>
     </h1>
     <div id="allGames">
     </div>
     <script src="main.js"></script>
     <script>
-        window.game = new Game();
 
-        setInterval(function(){
-            if (window.game.winner() != 0){
-                window.game = new Game();
-            }
-            if (window.game.player == 'O')
+
+        function player_vs_player(){
+            clearInterval(window.autoplay);
+            window.game = new Game();
+            window.game.render();
+        }
+
+        function player_vs_cpu(){
+            clearInterval(window.autoplay);
+            window.game = new Game();
+            window.game.render();
+
+            window.autoplay = setInterval(function(){
+                if (window.game.winner() != 0){
+                    window.game = new Game();
+                    window.game.render();
+                }
+                if (window.game.player == 'O')
+                    window.game.goodMove();
+            }, 300);
+        }
+
+        function cpu_vs_cpu(){
+            clearInterval(window.autoplay);
+            window.game = new Game(false);
+            window.game.render();
+
+            window.autoplay = setInterval(function(){
+                if (window.game.winner() != 0){
+                    window.game = new Game();
+                    window.game.render();
+                }
                 window.game.goodMove();
-        },2000)
+            }, 2000)   
+        }
+
+
     </script>
 </body>
 </html>
